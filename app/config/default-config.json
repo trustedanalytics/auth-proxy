@@ -1,0 +1,12 @@
+{
+  "domain": "",
+  "token_key_url": "",
+  "cf_api": "",
+  "uaa_api": "",
+  "auth_gateway_host": "",
+  "nats_url": "",
+  "route_host": "127.0.0.1",
+  "route_port": 8080,
+  "route_uri": "",
+  "profile": "cloud"
+}

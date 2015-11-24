@@ -1,0 +1,14 @@
+# IntelliJ project files
+.idea
+*.iml
+
+# Dependency directory
+node_modules
+npm-debug.log
+
+# Logs
+*.log
+
+# Editor Files
+*~
+*.swp

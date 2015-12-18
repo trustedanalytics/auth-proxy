@@ -28,7 +28,7 @@ function isCloud() {
 
 function getDomain() {
     if (!!vcapApplication.uris) {
-        return new URL(vcapApplication.uris[0]).host.split(".").slice(1, 3).join(".");
+        return new URL(vcapApplication.uris[0]).host.split(".").slice(1).join(".");
     } else {
         return getRequiredProperty("domain");
     }

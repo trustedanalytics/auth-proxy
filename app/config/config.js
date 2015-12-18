@@ -97,7 +97,7 @@ function getCfApi() {
         return cfApi;
     }
 
-    return util.format("api.%s", getDomain());
+    return util.format("cf-api.%s", getDomain());
 }
 
 function getUaaApi() {

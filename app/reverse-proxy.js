@@ -59,6 +59,7 @@ function createOrganization(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();
@@ -78,6 +79,7 @@ function deleteOrganization(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();
@@ -98,6 +100,7 @@ function addUserToOrganization(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();
@@ -117,6 +120,7 @@ function removeUserFromOrganization(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();
@@ -146,6 +150,7 @@ function addUserToOrganizationByUsername(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();
@@ -175,6 +180,7 @@ function removeUserFromOrganizationByUsername(req, res) {
             res.status(agResponse.statusCode).send();
         })
         .catch(function (error) {
+            logger.error(error.message);
             res.status(502).send(error.message);
         })
         .done();

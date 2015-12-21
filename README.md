@@ -71,18 +71,22 @@ and Cloud Controller or Auth-gateway).
 
 
 
-## Local deployment
+## Local development
 Auth-proxy is a nodejs application. First install all dependencies:
 ```sh
 npm install
 ```
 
-To run service locally you don't need to use and configure Nats. To  avoid that change variable profile in app/config/default-config.json from 'cloud' to 'local'. 
+To run service locally you don't need to use and configure nats. To disable it change variable *profile* in *app/config/default-config.json* to 'local'.
 
 Than start server:
 ```sh
 npm start
 ```
+
+Configuration of service can be changed by either overriding defaults using environment variables or defining them in *app/config/default-config.json*.
+In case they are defined in both places environment variables have higher priority. Service is also using best effort approach to guess parameters
+that were not specified but are needed for initialization. In case required parameters are missing service will notify about it and shutdown gracefully.
 
 ## Create docker image
 ```sh

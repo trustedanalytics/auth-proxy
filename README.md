@@ -123,6 +123,12 @@ tap/auth-proxy:0.4.0
 ```
 
 ## Deploy as application in TAP
+Install nodejs dependencies:
+```sh
+npm install
+```
+Then you can push application:
 ```sh
 cf push
 ```
+Application can be accessed using auth-proxy-app.DOMAIN or auth-proxy.DOMAIN (after it register itself in gorouter)

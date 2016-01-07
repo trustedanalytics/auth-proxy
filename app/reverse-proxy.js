@@ -33,121 +33,92 @@ module.exports = {
     removeUserFromOrganizationByUsername: removeUserFromOrganizationByUsername
 };
 
-function createOrganization(req, res) {
-    requestOrganizationByNamePromise(req)
-        .then(function (orgResponse) {
-            verifySuccess(orgResponse);
-
-            if (body(orgResponse).total_results === 1) {
-                var authGatewayUrl = new URL(req.url)
-                    .set('pathname', util.format('/organizations/%s', body(orgResponse).resources[0].metadata.guid));
-
-                return authGatewayPromise(req, authGatewayUrl, {method: 'PUT'});
-            } else {
-                return cloudControllerPromise(req, new URL(req.url))
-                    .then(function (ccResponse) {
-                        verifySuccess(ccResponse);
-
-                        var authGatewayUrl = new URL(req.url)
-                            .set('pathname', util.format('/organizations/%s', body(ccResponse).metadata.guid));
-                        return authGatewayPromise(req, authGatewayUrl, {method: 'PUT'});
+function createOrganization(proxyRequest, proxyResponse) {
+    ccGetOrganizationByName(proxyRequest)
+        .then(function (ccGetOrgResponse) {
+            if (!body(ccGetOrgResponse).total_results) {
+                return ccForward(proxyRequest, new URL(proxyRequest.url))
+                    .then(function(ccCreateOrgResponse) {
+                        return body(ccCreateOrgResponse);
                     });
             }
+            return body(ccGetOrgResponse).resources[0];
         })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
+        .then(function (ccOrg) {
+            var url = new URL(proxyRequest.url)
+                .set('pathname', util.format('/organizations/%s', ccOrg.metadata.guid));
+            return agForward(proxyRequest, url, {method: 'PUT'})
+                .then(function (agResponse) {
+                    return ccOrg;
+                })
+        })
+        .then(function (ccOrg) {
+            proxyResponse.status(201).send(ccOrg);
         })
         .catch(function (error) {
             logger.error(error.message);
-            res.status(502).send(error.message);
+            proxyResponse.status(502).send(error.message);
         })
         .done();
 }
 
-function deleteOrganization(req, res) {
-    cloudControllerPromise(req, new URL(req.url))
-        .then(function (ccResponse) {
-            verifySuccess(ccResponse, [404]);
-
-            var authGatewayUrl = new URL(req.url)
-                .set('pathname', util.format('/organizations/%s', req.params.org_guid));
-            return authGatewayPromise(req, authGatewayUrl, {method: 'DELETE'});
+function deleteOrganization(proxyRequest, proxyResponse) {
+    ccForward(proxyRequest, new URL(proxyRequest.url))
+        .catch(function (error) {
+            if (error.statusCode !== 404) {
+                throw error;
+            }
         })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
+        .then(function (ccResponse) {
+            var url = new URL(proxyRequest.url)
+                .set('pathname', util.format('/organizations/%s', proxyRequest.params.org_guid));
+            return agForward(proxyRequest, url, {method: 'DELETE'})
+                .then(function (agResponse) {
+                    return ccResponse;
+                })
+        })
+        .then(function (ccResponse) {
+            proxyResponse.status(ccResponse.statusCode).send();
         })
         .catch(function (error) {
             logger.error(error.message);
-            res.status(502).send(error.message);
+            proxyResponse.status(502).send(error.message);
         })
         .done();
-
 }
 
-function addUserToOrganization(req, res) {
-    cloudControllerPromise(req, new URL(req.url))
+function addUserToOrganization(proxyRequest, proxyResponse) {
+    ccForward(proxyRequest, new URL(proxyRequest.url))
         .then(function (ccResponse) {
-            verifySuccess(ccResponse);
-
-            var authGatewayUrl = new URL(req.url)
-                .set('pathname', util.format('/organizations/%s/users/%s', req.params.org_guid, req.params.user_guid));
-            return authGatewayPromise(req, authGatewayUrl, {method: 'PUT'});
+            var url = new URL(proxyRequest.url)
+                .set('pathname', util.format('/organizations/%s/users/%s', proxyRequest.params.org_guid, proxyRequest.params.user_guid));
+            return agForward(proxyRequest, url, {method: 'PUT'})
+                .then(function (agResponse) {
+                    return ccResponse;
+                });
         })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
+        .then(function (ccResponse) {
+            proxyResponse.status(ccResponse.statusCode).send(ccResponse.body);
         })
         .catch(function (error) {
             logger.error(error.message);
-            res.status(502).send(error.message);
+            proxyResponse.status(502).send(error.message);
         })
         .done();
 }
 
 function removeUserFromOrganization(req, res) {
-    cloudControllerPromise(req, new URL(req.url))
+    ccForward(req, new URL(req.url))
         .then(function (ccResponse) {
-            verifySuccess(ccResponse);
-
-            var authGatewayUrl = new URL(req.url)
+            var url = new URL(req.url)
                 .set('pathname', util.format('/organizations/%s/users/%s', req.params.org_guid, req.params.user_guid));
-            return authGatewayPromise(req, authGatewayUrl, {method: 'DELETE'});
+            return agForward(req, url, {method: 'DELETE'})
+                .then(function (agResponse) {
+                    return ccResponse;
+                });
         })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
-        })
-        .catch(function (error) {
-            logger.error(error.message);
-            res.status(502).send(error.message);
-        })
-        .done();
-}
-
-function addUserToOrganizationByUsername(req, res) {
-    requestUserPromise(req)
-        .then(function (userResponse) {
-            verifySuccess(userResponse);
-
-            if (body(userResponse).totalResults === 1) {
-                return cloudControllerPromise(req, new URL(req.url))
-                    .then(function (ccResponse) {
-                        verifySuccess(ccResponse);
-
-                        var authGatewayUrl = new URL(req.url)
-                            .set('pathname', util.format('/organizations/%s/users/%s', req.params.org_guid, body(userResponse).resources[0].id));
-
-                        return authGatewayPromise(req, authGatewayUrl, {method: 'PUT'});
-                    });
-            } else {
-                return responsePromise(200);
-            }
-        })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
+        .then(function (ccResponse) {
+            res.status(ccResponse.statusCode).send(ccResponse.body);
         })
         .catch(function (error) {
             logger.error(error.message);
@@ -156,37 +127,61 @@ function addUserToOrganizationByUsername(req, res) {
         .done();
 }
 
-function removeUserFromOrganizationByUsername(req, res) {
-    requestUserPromise(req)
-        .then(function (userResponse) {
-            verifySuccess(userResponse);
-
-            if (body(userResponse).totalResults === 1) {
-                return cloudControllerPromise(req, new URL(req.url))
-                    .then(function (ccResponse) {
-                        verifySuccess(ccResponse);
-
-                        var authGatewayUrl = new URL(req.url)
-                            .set('pathname', util.format('/organizations/%s/users/%s', req.params.org_guid, body(userResponse).resources[0].id));
-
-                        return authGatewayPromise(req, authGatewayUrl, {method: 'DELETE'});
-                    });
-            } else {
-                return responsePromise(200);
-            }
-        })
-        .then(function (agResponse) {
-            verifySuccess(agResponse);
-            res.status(agResponse.statusCode).send();
-        })
-        .catch(function (error) {
+function addUserToOrganizationByUsername(proxyRequest, proxyResponse) {
+    ccForward(proxyRequest, new URL(proxyRequest.url))
+        .then(function (ccResponse) {
+            return uaaGetUserByName(proxyRequest)
+                .then(function (uaaResponse) {
+                    if (!body(uaaResponse).totalResults) {
+                        throw new Error("user does not exist")
+                    }
+                    return body(uaaResponse).resources[0].id;
+                })
+                .then(function(userGuid) {
+                    var url = new URL(proxyRequest.url)
+                        .set('pathname', util.format('/organizations/%s/users/%s', proxyRequest.params.org_guid, userGuid));
+                    return agForward(proxyRequest, url, {method: 'PUT'});
+                })
+                .then(function(agResponse) {
+                    return ccResponse;
+                })
+        }).then(function(ccResponse) {
+            proxyResponse.status(ccResponse.statusCode).send(ccResponse.body);
+        }).catch(function (error) {
             logger.error(error.message);
-            res.status(502).send(error.message);
+            proxyResponse.status(502).send(error.message);
         })
         .done();
 }
 
-function cloudControllerPromise(req, url) {
+function removeUserFromOrganizationByUsername(proxyRequest, proxyResponse) {
+    ccForward(proxyRequest, new URL(proxyRequest.url))
+        .then(function (ccResponse) {
+            return uaaGetUserByName(proxyRequest)
+                .then(function (uaaResponse) {
+                    if (!body(uaaResponse).totalResults) {
+                        throw new Error("user does not exist")
+                    }
+                    return body(uaaResponse).resources[0].id;
+                })
+                .then(function(userGuid) {
+                    var url = new URL(proxyRequest.url)
+                        .set('pathname', util.format('/organizations/%s/users/%s', proxyRequest.params.org_guid, userGuid));
+                    return agForward(proxyRequest, url, {method: 'DELETE'});
+                })
+                .then(function(agResponse) {
+                    return ccResponse;
+                })
+        }).then(function(ccResponse) {
+            proxyResponse.status(ccResponse.statusCode).send(ccResponse.body);
+        }).catch(function (error) {
+            logger.error(error.message);
+            proxyResponse.status(502).send(error.message);
+        })
+        .done();
+}
+
+function ccForward(req, url) {
     var hostname = config.getCfApi();
 
     url.set('hostname', hostname);
@@ -203,7 +198,7 @@ function cloudControllerPromise(req, url) {
     return requestPromise(url.href, options);
 }
 
-function authGatewayPromise(req, url, options) {
+function agForward(req, url, options) {
     var hostname = config.getAuthGatewayHost();
 
     url.set('hostname', hostname);
@@ -216,7 +211,7 @@ function authGatewayPromise(req, url, options) {
     return requestPromise(url.href, options);
 }
 
-function requestOrganizationByNamePromise(req) {
+function ccGetOrganizationByName(req) {
     var uri = new URL(util.format('%s://%s/v2/organizations?q=name:%s', req.protocol, config.getCfApi(), req.body.name));
     return requestPromise(uri.href, {
         headers: {
@@ -226,7 +221,7 @@ function requestOrganizationByNamePromise(req) {
     });
 }
 
-function requestUserPromise(req) {
+function uaaGetUserByName(req) {
     var uri = new URL(util.format('%s://%s/Users?attributes=id,userName&filter=userName+Eq+%22%s%22', req.protocol, config.getUaaApi(), req.body.name));
     return requestPromise(uri.href, {
         headers: {
@@ -241,38 +236,33 @@ function requestPromise(uri, options) {
     logger.info("method: %s, uri: %s", options.method, uri);
     request(uri.toString(), options, function (err, res) {
         if (err) {
-            deferred.reject(new Error({message: "Request to " + uri + " failed."}));
+            deferred.reject(new Error("Request to " + uri + " failed."));
         } else {
-            deferred.resolve(res);
+            var error = checkError(res);
+            if (error) {
+                deferred.reject(error);
+            } else {
+                deferred.resolve(res);
+            }
         }
     });
     return deferred.promise;
 }
 
-function responsePromise(statusCode) {
-    var deferred = Q.defer();
-    deferred.resolve({statusCode: statusCode});
-    return deferred.promise;
+function checkError(response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+        return formatResponse(response);
+    }
+    return null;
 }
 
 function formatResponse(res) {
     return {
         source: res.req.path,
-        status: res.statusCode,
+        statusCode: res.statusCode,
         message: res.body,
         timestamp: new Date().getTime()
     };
-}
-
-function verifySuccess(response, expectedStatusCodes) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-        if (typeof expectedStatusCodes !== "undefined") {
-            if (_.contains(expectedStatusCodes, response.statusCode)) {
-                return;
-            }
-        }
-        throw new Error(JSON.stringify(formatResponse(response)));
-    }
 }
 
 function body(response) {

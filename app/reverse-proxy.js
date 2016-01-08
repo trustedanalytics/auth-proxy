@@ -233,7 +233,7 @@ function uaaGetUserByName(req) {
 
 function requestPromise(uri, options) {
     var deferred = Q.defer();
-    logger.info("method: %s, uri: %s", options.method, uri);
+    logger.info("outgoing request - method: %s, uri: %s", options.method, uri);
     request(uri.toString(), options, function (err, res) {
         if (err) {
             deferred.reject(new Error("Request to " + uri + " failed."));

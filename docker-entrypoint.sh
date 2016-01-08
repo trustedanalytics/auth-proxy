@@ -37,8 +37,8 @@ if ! [ "$ROUTE_PORT" ]; then
     exit 1
 fi
 
-if ! [ "$CF_API" ]; then
-    echo "CF_API environment variable is required"
+if ! [ "$TOKEN_KEY_URL" ]; then
+    echo "TOKEN_KEY_URL environment variable is required"
     exit 1
 fi
 

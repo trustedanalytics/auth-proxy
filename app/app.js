@@ -29,6 +29,12 @@ module.exports = app;
 auth.init(app)
     .then(router.init(app))
     .then(function (app) {
+        // filter
+        app.use(function (req, res, next) {
+            logger.info("incoming request - method: %s, uri: %s", req.method, req.originalUrl);
+            next();
+        });
+
         // https://apidocs.cloudfoundry.org/225/organizations/creating_an_organization.html
         app.post('/v2/organizations',
             passport.authenticate('jwt-bearer', {session: false}),

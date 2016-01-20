@@ -13,73 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var passport = require('passport');
-var express = require('express');
-var bodyParser = require('body-parser');
-var reverseProxy = require('./reverse-proxy');
-var router = require('./router');
-var auth = require('./auth');
-var logger = require('./logging').logger;
+"use strict";
 
-var app = express();
-app.use(bodyParser.json());
+var passport = require('passport'),
+    app = require('express')(),
+    bodyParser = require('body-parser'),
+    reverseProxy = require('./reverse-proxy'),
+    router = require('./router'),
+    auth = require('./auth/auth'),
+    logging = require('./logging'),
+
+    logger = logging.logger;
 
 module.exports = app;
 
+app.use(bodyParser.json());
+app.use(logging.middleware);
+
+
 auth.init(app)
-    .then(router.init(app))
-    .then(function (app) {
-        // filter
-        app.use(function (req, res, next) {
-            logger.info("incoming request - method: %s, uri: %s", req.method, req.originalUrl);
-            next();
-        });
+    .then(router.init)
+    .then(function () {
+
+        // authenticate requests
+        app.use(passport.authenticate('jwt-bearer', {session: false}));
 
         // https://apidocs.cloudfoundry.org/225/organizations/creating_an_organization.html
         app.post('/v2/organizations',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.createOrganization
         );
 
         // https://apidocs.cloudfoundry.org/225/organizations/delete_a_particular_organization.html
         app.delete('/v2/organizations/:org_guid',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.deleteOrganization
         );
 
         // https://apidocs.cloudfoundry.org/225/organizations/associate_user_with_the_organization.html
         app.put('/v2/organizations/:org_guid/users/:user_guid',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.addUserToOrganization
         );
 
         // https://apidocs.cloudfoundry.org/225/organizations/remove_user_from_the_organization.html
         app.delete('/v2/organizations/:org_guid/users/:user_guid',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.removeUserFromOrganization
         );
 
         // https://apidocs.cloudfoundry.org/225/organizations/associate_user_with_the_organization_by_username.html
         app.put('/v2/organizations/:org_guid/users',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.addUserToOrganizationByUsername
         );
 
         // https://apidocs.cloudfoundry.org/225/organizations/disassociate_user_with_the_organization_by_username.html
         app.delete('/v2/organizations/:org_guid/users',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.removeUserFromOrganizationByUsername
         );
 
         // https://apidocs.cloudfoundry.org/225/users/associate_organization_with_the_user.html
         app.put('/v2/users/:user_guid/organizations/:org_guid',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.addUserToOrganization
         );
 
         // https://apidocs.cloudfoundry.org/225/users/remove_organization_from_the_user.html
         app.delete('/v2/users/:user_guid/organizations/:org_guid',
-            passport.authenticate('jwt-bearer', {session: false}),
             reverseProxy.removeUserFromOrganization
         );
     }).then(function () {

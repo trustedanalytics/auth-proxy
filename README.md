@@ -10,7 +10,7 @@ grant or revoke access to some of the platform components (e.g. organization). H
 information Auth-gateway can perform additional actions regarding access and security in Hadoop.
 
 ## The request flow
-![](AuthProxy.png)
+![](docs/AuthProxy.png)
 
 User actions performed either through Console or CF CLI result in REST calls to Cloud Controller. All
 of them are routed via Load balancer which is configured to intercept some of them (defined in next
@@ -57,19 +57,7 @@ and Cloud Controller or Auth-gateway).
     DELETE /v2/users/:user_guid/organizations/:org_guid
     ```
         
--   Add user to organization (by username)
-    (https://apidocs.cloudfoundry.org/225/organizations/associate_user_with_the_organization_by_username.html)
-    ```
-    PUT /v2/organizations/:org_guid/users
-    ```
-    
--   Remove user from organization (by username)
-    (https://apidocs.cloudfoundry.org/225/organizations/disassociate_user_with_the_organization_by_username.html)
-    ```
-    DELETE /v2/organizations/:org_guid/users
-    ```
-
-
+Whole sequence diagram of how auth-proxy responses in certain situations can be found here: ![sequence diagram](docs/sequence-diagram.png)
 
 ## Local development
 Auth-proxy is a nodejs application. First install all dependencies:

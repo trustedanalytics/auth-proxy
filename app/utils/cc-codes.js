@@ -15,16 +15,6 @@
  */
 "use strict";
 
-var user = require('./lib/user'),
-    organization = require('./lib/organization');
-
 module.exports = {
-    createOrganization: organization.create,
-    deleteOrganization: organization.delete,
-
-    addUserToOrganization: user.addToOrg,
-    removeUserFromOrganization: user.removeFromOrg,
-
-    addUserToOrganizationByUsername: user.addToOrgByName,
-    removeUserFromOrganizationByUsername: user.removeFromOrgByName
+    ORG_NAME_TAKEN: 30002
 };

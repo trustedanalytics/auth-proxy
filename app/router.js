@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
 
 var nats = require('nats');
 var config = require('./config/config');
@@ -23,35 +24,35 @@ module.exports = {
     init: init
 };
 
-function init(app) {
+function init() {
     var deferred = Q.defer();
 
     if (config.get("profile") === "local") {
-        deferred.resolve(app);
-        return deferred.promise;
-    } else {
-        logger.info("initializing routing...");
-
-        var msg = JSON.stringify({
-            host: config.getRouteHost(),
-            port: config.getRoutePort(),
-            uris: [config.getRouteUri()]
-        });
-
-        var subject = "router.register";
-
-        var router = nats.connect({url: config.getNatsUrl()});
-        router.publish(subject, msg, function () {
-            logger.info('route registered: ' + msg);
-            deferred.resolve(app);
-        });
-
-        setInterval(function () {
-            router.publish(subject, msg, function () {
-                logger.info('route registered: ' + msg);
-            });
-        }, 1000 * 60);
-
+        deferred.resolve();
         return deferred.promise;
     }
+
+    logger.info("initializing routing...");
+
+    var msg = JSON.stringify({
+        host: config.getRouteHost(),
+        port: config.getRoutePort(),
+        uris: [config.getRouteUri()]
+    });
+
+    var subject = "router.register";
+
+    var router = nats.connect({url: config.getNatsUrl()});
+    router.publish(subject, msg, function () {
+        logger.info('route registered: ' + msg);
+        deferred.resolve();
+    });
+
+    setInterval(function () {
+        router.publish(subject, msg, function () {
+            logger.info('route registered: ' + msg);
+        });
+    }, 1000 * 60);
+
+    return deferred.promise;
 }

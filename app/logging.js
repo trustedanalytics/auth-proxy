@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
 
 var config = require('./config/config');
 var winston = require('winston');
 var fs = require('fs');
+var Q = require('q');
+var morgan = require('morgan');
 
-var logger = new (winston.Logger);
+var logger = new winston.Logger();
 
-if (config.isCloud()) {
-    logger.add(winston.transports.Console, {level: 'info'});
-} else {
-    logger.add(winston.transports.Console, {level: 'info'});
+logger.add(winston.transports.Console, {level: 'info'});
 
-    ensureExists('./logs', 0777, function (err) {
-        if (err == null) {
+if (!config.isCloud()) {
+    ensureExists('./logs')
+        .then(function () {
             logger.add(winston.transports.File, {
                 name: 'info',
                 filename: './logs/auth-proxy.log',
@@ -37,24 +38,27 @@ if (config.isCloud()) {
                 filename: './logs/auth-proxy-error.log',
                 level: 'error'
             });
-        }
-    });
+        })
+        .catch(function (err) {
+            logger.warn("Failed to set up file logging: %j", err);
+        });
 }
 
-function ensureExists(path, mask, call) {
-    fs.mkdir(path, mask, function (err) {
-        if (err) {
-            if (err.code == 'EEXIST') {
-                call(null);
-            } else {
-                call(err);
-            }
+function ensureExists(path) {
+    var deferred = Q.defer();
+
+    fs.mkdir(path, function (err) {
+        if (err && err.code !== 'EEXIST') {
+            deferred.reject(err);
         } else {
-            call(null);
+            deferred.resolve();
         }
     });
+
+    return deferred.promise;
 }
 
 module.exports = {
-    logger: logger
+    logger: logger,
+    middleware: morgan("dev")
 };

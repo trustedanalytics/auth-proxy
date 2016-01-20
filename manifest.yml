@@ -3,7 +3,6 @@ applications:
     memory: 512M
     disk_quota: 128M
     instances: 1
-    host: auth-proxy-app
     buildpack: nodejs_buildpack
     services:
       - sso

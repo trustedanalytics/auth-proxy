@@ -37,9 +37,5 @@ if ! [ "$ROUTE_PORT" ]; then
     exit 1
 fi
 
-if ! [ "$TOKEN_KEY_URL" ]; then
-    echo "TOKEN_KEY_URL environment variable is required"
-    exit 1
-fi
 
 exec "$@"

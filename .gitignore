@@ -8,6 +8,7 @@ npm-debug.log
 
 # Logs
 *.log
+/logs
 
 # Editor Files
 *~

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
+
 var _ = require('underscore');
 var defaults = require('./default-config.json');
 var util = require('util');
@@ -27,30 +29,28 @@ function isCloud() {
 }
 
 function getDomain() {
-    if (!!vcapApplication.uris) {
+    if (vcapApplication.uris) {
         return new URL(vcapApplication.uris[0]).host.split(".").slice(1).join(".");
-    } else {
-        return getRequiredProperty("domain");
     }
+    return getRequiredProperty("domain");
 }
 
 function getNatsUrl() {
     var nats = getUserProvidedService("nats-provider");
-    if (nats != null) {
+    if (nats) {
         return nats.url;
-    } else {
-        return getRequiredProperty("nats_url");
     }
+    return getRequiredProperty("nats_url");
 }
 
 function getTokenKeyUrl() {
     var sso = getUserProvidedService("sso");
-    if (sso != null) {
+    if (sso) {
         return sso.tokenKey;
     }
 
     var tokenKeyUrl = getProperty("token_key_url");
-    if (!!tokenKeyUrl) {
+    if (tokenKeyUrl) {
         return tokenKeyUrl;
     }
 
@@ -58,75 +58,43 @@ function getTokenKeyUrl() {
 }
 
 function getAuthGatewayHost() {
-    var authGatewayHost = getProperty("auth_gateway_host");
-    if (!!authGatewayHost) {
-        return authGatewayHost;
-    }
-
-    return util.format("auth-gateway.%s", getDomain())
+    return getProperty("auth_gateway_host") || util.format("auth-gateway.%s", getDomain());
 }
 
 function getRouteHost() {
-    var routeHost = getProperty("CF_INSTANCE_IP");
-    if (!!routeHost) {
-        return routeHost;
-    }
-    return getRequiredProperty("route_host");
+    return getProperty("CF_INSTANCE_IP") || getRequiredProperty("route_host");
 }
 
 function getRoutePort() {
-    var routePort = getProperty("CF_INSTANCE_PORT");
-    if (!!routePort) {
-        return parseInt(routePort);
-    }
-    return parseInt(getRequiredProperty("route_port"));
+    var routePort = getProperty("CF_INSTANCE_PORT") || getRequiredProperty("route_port");
+    return parseInt(routePort);
 }
 
 function getRouteUri() {
-    var routeUri = getProperty("route_uri");
-    if (!!routeUri) {
-        return routeUri;
-    }
-
-    return util.format("auth-proxy.%s", getDomain());
+    return getProperty("route_uri") ||  util.format("auth-proxy.%s", getDomain());
 }
 
 function getCfApi() {
-    var cfApi = getProperty("cf_api");
-    if (!!cfApi) {
-        return cfApi;
-    }
-
-    return util.format("cf-api.%s", getDomain());
+    return getProperty("cf_api") || util.format("cf-api.%s", getDomain());
 }
 
 function getUaaApi() {
-    var uaaApi = getProperty("uaa_api");
-    if (!!uaaApi) {
-        return uaaApi;
-    }
-
-    return util.format("uaa.%s", getDomain());
+    return getProperty("uaa_api") || util.format("uaa.%s", getDomain());
 }
 
 function getRequiredProperty(name) {
     var property = getProperty(name);
-    if (!!property) {
-        return property;
-    } else {
+    if (!property) {
         throw new Error('Property: ' + name.toUpperCase() + ' is required.');
     }
+    return property;
 }
 
 function getProperty(name) {
-    if (!name || !_.isString(name)) {
+    if (!_.isString(name)) {
         return null;
     }
-    var value = process.env[name.toUpperCase()];
-    if (!value) {
-        value = defaults[name.toLowerCase()];
-    }
-    return value;
+    return process.env[name.toUpperCase()] || defaults[name.toLowerCase()];
 }
 
 function getUserProvidedService(name) {

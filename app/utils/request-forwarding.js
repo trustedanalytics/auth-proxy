@@ -15,16 +15,20 @@
  */
 "use strict";
 
-var user = require('./lib/user'),
-    organization = require('./lib/organization');
+var config = require('../config/config'),
+    rh = require('./request-helpers');
+
+function ccForward(req, path, options) {
+    var hostname = config.getCfApi();
+    return rh.getPipedRequest(req, hostname, path, options);
+}
+
+function agForward(req, path, options) {
+    var hostname = config.getAuthGatewayHost();
+    return rh.getPipedRequest(req, hostname, path, options);
+}
 
 module.exports = {
-    createOrganization: organization.create,
-    deleteOrganization: organization.delete,
-
-    addUserToOrganization: user.addToOrg,
-    removeUserFromOrganization: user.removeFromOrg,
-
-    addUserToOrganizationByUsername: user.addToOrgByName,
-    removeUserFromOrganizationByUsername: user.removeFromOrgByName
+    ccForward: ccForward,
+    agForward: agForward
 };

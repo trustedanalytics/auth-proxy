@@ -13,36 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+"use strict";
 
-var request = require('request');
 var passport = require('passport');
-var config = require('./config/config');
-var JwtBearerStrategy = require('passport-http-jwt-bearer');
-var Q = require('q');
-var logger = require('./logging').logger;
+var logger = require('../logging').logger;
+var jwtBearerAuth = require('./jwt-bearer-auth');
 
 module.exports = {
     init: init
 };
 
 function init(app) {
-    var deferred = Q.defer();
     logger.info("initializing security...");
 
-    request(config.getTokenKeyUrl(), function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            passport.use(new JwtBearerStrategy(
-                JSON.parse(body).value,
-                function (token, done) {
-                    return done(null, token);
-                }
-            ));
+    return jwtBearerAuth.getStrategy()
+        .then(function (strategy) {
+            passport.use(strategy);
             app.use(passport.initialize());
-            deferred.resolve(app);
-        } else {
-            deferred.reject(new Error(error))
-        }
-    });
-
-    return deferred.promise;
+        });
 }

@@ -18,7 +18,6 @@
 var urlParse = require('url-parse'),
     util = require('util'),
     errorHandlers = require('../utils/error-handlers'),
-    logger = require('../logging').logger,
     forwarding = require('../utils/request-forwarding'),
     requestHelpers = require('../utils/request-helpers');
 
@@ -26,13 +25,12 @@ function createOrganization(request, response) {
     var orgName = request.body.name,
         org = null,
         handlers = errorHandlers.get(response, 'create organization', orgName);
-    logger.info('Creating organization', orgName);
+    console.info('Creating organization', orgName);
 
     return forwarding.ccForward(request)
         .then(function (_org) {
             org = _org;
-            logger.debug("Got response from CF", org);
-            logger.info(util.format('Organization created in CF', orgName, org.metadata.guid));
+            console.info('Organization created in CF', orgName, org.metadata.guid);
         })
         .catch(handlers.cleanErrorHandler)
         .then(function () {
@@ -40,8 +38,7 @@ function createOrganization(request, response) {
             return forwarding.agForward(request, path, {method: requestHelpers.Method.PUT, json: false});
         })
         .then(function (agResponse) {
-            logger.debug("Got response from AG", agResponse);
-            logger.info(util.format('Organization created in auth-gateway', orgName, org.metadata.guid));
+            console.info('Organization created in auth-gateway', orgName, org.metadata.guid, agResponse);
             return agResponse.statusCode === 202;
         })
         .then(function (async) {
@@ -54,18 +51,17 @@ function deleteOrganization(request, response) {
     var url = new urlParse(request.url),
         orgId = request.params.org_guid,
         handlers = errorHandlers.get(response, 'delete organization', orgId);
-    logger.info('Deleting organization', orgId);
+    console.info('Deleting organization', orgId);
 
     return forwarding.ccForward(request)
         .catch(handlers.cleanErrorHandler)
         .then(function () {
-            logger.info("Deleted organization from CF", url.pathname);
+            console.info("Deleted organization from CF", url.pathname);
             var path = util.format('/organizations/%s', orgId);
             return forwarding.agForward(request, path, {method: requestHelpers.Method.DELETE, json: false});
         })
         .then(function (agResponse) {
-            logger.debug("Got response from AG", agResponse);
-            logger.info("Deleted organization from auth-gateway", url.pathname);
+            console.info("Deleted organization from auth-gateway", url.pathname, agResponse);
             return agResponse.statusCode === 202;
         })
         .then(function (async) {

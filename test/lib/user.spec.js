@@ -74,7 +74,7 @@ describe('User test', function() {
         reqHelpersMock = getReqHelpersMock();
 
         mockery.registerAllowables(['underscore', 'url-parse', 'util', './', '../logging', '../config/config',
-            './default-config.json', SUT_PATH]);
+            SUT_PATH]);
         mockery.registerMock('../utils/request-forwarding', forwardingMock);
         mockery.registerMock('../utils/request-helpers', reqHelpersMock);
         mockery.registerSubstitute('../logging', '../../test/mocks/logging-mock');

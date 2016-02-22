@@ -19,8 +19,7 @@ var config = require('../config/config'),
     rh = require('./request-helpers');
 
 function ccForward(req, path, options) {
-    var hostname = config.getCfApi();
-    return rh.getPipedRequest(req, hostname, path, options);
+    return rh.getPipedRequest(req, config.getCfApiHost(), path, options);
 }
 
 function agForward(req, path, options) {

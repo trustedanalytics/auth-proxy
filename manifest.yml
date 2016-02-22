@@ -1,9 +1,6 @@
 applications:
-  - name: auth-proxy-app
+  - name: auth-proxy
     memory: 512M
     disk_quota: 128M
     instances: 1
     buildpack: nodejs_buildpack
-    services:
-      - sso
-      - nats-provider

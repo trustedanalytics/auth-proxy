@@ -59,55 +59,37 @@ and Cloud Controller or Auth-gateway).
         
 Whole sequence diagram of how auth-proxy responses in certain situations can be found here: ![sequence diagram](docs/sequence-diagram.png)
 
+## Configuration
+
+Although, running in cloud, auth-proxy is able to fetch all configuration properties automatically, it is possible to overwrite the default configuration.
+To do that, set proper environment variable as follows::
+
+| Property name | Description |
+| --- | --- |
+| DOMAIN | Domain of the environment |
+| CF_API_HOST | Hostname of the original CF API |
+| AUTH_GATEWAY_HOAT | Hostname of auth-gateway app |
+| TOKEN_KEY_URL | URL to the UAA's key public |
+ 
+To set environment variable for CF app:
+```sh
+cf set-env auth-proxy <env name> <value>
+```
+
 ## Local development
 Auth-proxy is a nodejs application. First install all dependencies:
 ```sh
 npm install
 ```
 
-To run service locally you don't need to use and configure nats. To disable it change variable *profile* in *app/config/default-config.json* to 'local'.
+Allthough, in cloud environment auth-proxy is able to automatically determine domain under it is currently running, it is necessary to set that manually during local development.
+```sh
+export DOMAIN <base domain name>
+```
 
-Than start server:
+When configuration is ready, start server:
 ```sh
 npm start
-```
-
-Configuration of service can be changed by either overriding defaults using environment variables or defining them in *app/config/default-config.json*.
-In case they are defined in both places environment variables have higher priority. Service is also using best effort approach to guess parameters
-that were not specified but are needed for initialization. In case required parameters are missing service will notify about it and shutdown gracefully.
-
-## Create docker image
-```sh
-./build.sh
-```
-
-## Start docker container
-
-Required parameters:
-```sh
--e DOMAIN="domain.com"
--e NATS_URL="nats://LOGIN:PASSWORD@IP:PORT"
--e ROUTE_HOST="HOST_IP"
--e ROUTE_PORT=HOST_PORT
-``` 
-
-Optional parameters:
-```sh
--e TOKEN_KEY_URL="https://uaa.DOMAIN/token_key"
--e CF_API="api.DOMAIN"
--e UAA_API="uaa.DOMAIN"
--e AUTH_GATEWAY_HOST="auth-gateway.DOMAIN"
--e ROUTE_URI="auth-proxy.DOMAIN"
-``` 
-
-Example:
-```sh
-sudo docker run \
--e DOMAIN="domain.com" \
--e NATS_URL="nats://nats_login:nats_password@127.0.0.1:4222" \
--e ROUTE_HOST="127.0.0.1" \
--e ROUTE_PORT=61009 \
-tap/auth-proxy:0.4.0
 ```
 
 ## Deploy as application in TAP
@@ -119,4 +101,3 @@ Then you can push application:
 ```sh
 cf push
 ```
-Application can be accessed using auth-proxy-app.DOMAIN or auth-proxy.DOMAIN (after it register itself in gorouter)

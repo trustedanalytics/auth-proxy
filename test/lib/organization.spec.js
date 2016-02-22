@@ -67,7 +67,7 @@ describe('Organization test', function() {
         forwardingMock = getForwardingMock();
 
         mockery.registerAllowables(['q', 'underscore', 'url-parse', 'util', './', '../logging', '../config/config',
-            './default-config.json', '../../app/lib/organization']);
+            '../../app/lib/organization']);
         mockery.registerMock('../utils/request-forwarding', forwardingMock);
         mockery.registerSubstitute('../logging', '../../test/mocks/logging-mock');
         mockery.enable();

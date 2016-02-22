@@ -18,21 +18,17 @@
 var passport = require('passport'),
     app = require('express')(),
     bodyParser = require('body-parser'),
+    logger = require('morgan'),
     reverseProxy = require('./reverse-proxy'),
-    router = require('./router'),
-    auth = require('./auth/auth'),
-    logging = require('./logging'),
-
-    logger = logging.logger;
+    auth = require('./auth/auth');
 
 module.exports = app;
 
 app.use(bodyParser.json());
-app.use(logging.middleware);
+app.use(logger('dev'));
 
 
 auth.init(app)
-    .then(router.init)
     .then(function () {
 
         // authenticate requests
@@ -78,7 +74,7 @@ auth.init(app)
             reverseProxy.removeUserFromOrganization
         );
     }).then(function () {
-        logger.info("initialization completed...");
+        console.info("initialization completed...");
     }).catch(function (err) {
-        logger.error(err);
+        console.error(err);
     }).done();

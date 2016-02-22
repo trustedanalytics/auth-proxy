@@ -16,7 +16,6 @@
 "use strict";
 
 var passport = require('passport');
-var logger = require('../logging').logger;
 var jwtBearerAuth = require('./jwt-bearer-auth');
 
 module.exports = {
@@ -24,7 +23,7 @@ module.exports = {
 };
 
 function init(app) {
-    logger.info("initializing security...");
+    console.info("initializing security...");
 
     return jwtBearerAuth.getStrategy()
         .then(function (strategy) {

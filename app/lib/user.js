@@ -15,12 +15,16 @@
  */
 "use strict";
 
-var errorHandlers = require('../utils/error-handlers'),
-    logger = require('../logging').logger,
+var _ = require('underscore'),
+    errorHandlers = require('../utils/error-handlers'),
     forwarding = require('../utils/request-forwarding');
 
+var types = {
+    ADD: "ADD",
+    DELETE: "DELETE"
+};
 
-function forward(req, res) {
+function forward(type, req, res) {
     var ccResponse = null,
         userGuid = req.params.org_guid,
         handlers = errorHandlers.get(res, 'add/remove user', userGuid);
@@ -34,11 +38,19 @@ function forward(req, res) {
             return forwarding.agForward(req, path, {json: false});
         })
         .then(function (agResponse) {
-            logger.debug("Got response from AG", agResponse);
+            console.info("Got response from AG", agResponse);
             return agResponse.statusCode === 202;
         })
         .then(function(async) {
-            res.status(async ? 202 : 201).send(JSON.stringify(ccResponse));
+            var status;
+            if(async) {
+                status = 202;
+            } else if(type === types.ADD) {
+                status = 201;
+            } else {
+                status = 200;
+            }
+            res.status(status).send(JSON.stringify(ccResponse));
         })
         .catch(handlers.dirtyErrorHandler);
 }
@@ -84,8 +96,8 @@ function uaaGetUserByName(req) {
 }*/
 
 module.exports = {
-    addToOrg: forward,
-    removeFromOrg: forward,
+    addToOrg: _.partial(forward, types.ADD),
+    removeFromOrg: _.partial(forward, types.DELETE),
     addToOrgByName: forwardWithUserByName,
     removeFromOrgByName: forwardWithUserByName
 };

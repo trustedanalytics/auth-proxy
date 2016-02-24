@@ -1,6 +1,6 @@
 {
   "name": "auth-proxy",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "main": "app/server.js",
   "scripts": {
     "lint": "node node_modules/jshint/bin/jshint app",

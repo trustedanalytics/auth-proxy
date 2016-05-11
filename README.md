@@ -1,3 +1,5 @@
+[![Dependency Status](https://www.versioneye.com/user/projects/5723601bba37ce0031fc19a8/badge.svg?style=flat)](https://www.versioneye.com/user/projects/5723601bba37ce0031fc19a8)
+
 # Auth-proxy
 >Service that provides centralized entry point for handling requests regarding granting and revoking permissions
 >to cloud foundry and Hadoop.

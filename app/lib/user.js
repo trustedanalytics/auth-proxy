@@ -16,8 +16,11 @@
 "use strict";
 
 var _ = require('underscore'),
+    util = require('util'),
     errorHandlers = require('../utils/error-handlers'),
-    forwarding = require('../utils/request-forwarding');
+    forwarding = require('../utils/request-forwarding'),
+    requestHelpers = require('../utils/request-helpers'),
+    config = require('../config/config');
 
 var types = {
     ADD: "ADD",
@@ -55,49 +58,64 @@ function forward(type, req, res) {
         .catch(handlers.dirtyErrorHandler);
 }
 
-function forwardWithUserByName(req, res) {
-    // Feature available since CF 219. Will be implemented when we have enviromnents with that version.
-    res.status(405).send('Adding user by name is not implemented in this version of auth-proxy');
-    /*return forwarding.ccForward(req)
-        .then(function (ccResponse) {
+function forwardWithUserByName(type, req, res) {
+    var ccResponse = null,
+        userGuid = req.params.org_guid,
+        handlers = errorHandlers.get(res, 'add/remove user by name', userGuid);
+    return forwarding.ccForward(req)
+        .catch(handlers.cleanErrorHandler)
+        .then(function (_ccResponse) {
+            ccResponse = _ccResponse;
+        })
+        .then(function () {
             return uaaGetUserByName(req)
                 .then(function (user) {
-                    var path = util.format('/v2/organizations/%s/users/%s', req.params.org_guid, user.metadata.guid);
-                    return forwarding.agForward(req, path);
+                    var path = util.format('/organizations/%s/users/%s', req.params.org_guid, user.id);
+                    return forwarding.agForward(req, path, {json: false});
                 })
                 .then(function (agResponse) {
-                    logger.debug("Got response from AG", agResponse);
-                    return requestHelpers.handleAsyncResponse(agResponse, ccResponse);
+                    console.info("Got response from AG", agResponse);
+                    return agResponse.statusCode === 202;
                 });
         })
-        .then(_.partial(forwardCcResponse, res))
-        .catch(_.partial(catchError, req, res));*/
+        .then(function(async) {
+            var status;
+            if(async) {
+                status = 202;
+            } else if(type === types.ADD) {
+                status = 201;
+            } else {
+                status = 200;
+            }
+            res.status(status).send(JSON.stringify(ccResponse));
+        })
+        .catch(handlers.dirtyErrorHandler);
 }
 
-/*
 function uaaGetUserByName(req) {
-    var username = req.body.name;
+    var username = req.body.username;
     var uri = util.format('%s://%s/Users?attributes=id,userName&filter=userName+Eq+%22%s%22', req.protocol,
-        config.getUaaApi(), username);
+        config.getUaaHost(), username);
     var options = {
         headers: {
             authorization: req.headers.authorization
         }
     };
     return requestHelpers
-        .getJsonRequest(requestHelpers.Method.GET, uri.href, options)
+        .getJsonRequest(requestHelpers.Method.GET, uri, options)
         .then(function (userResource) {
+            console.info("Got response from UAA", userResource);
             var user = userResource && _.first(userResource.resources);
             if (!user) {
                 throw new Error(util.format("User %s does not exist", username));
             }
             return user;
         });
-}*/
+}
 
 module.exports = {
     addToOrg: _.partial(forward, types.ADD),
     removeFromOrg: _.partial(forward, types.DELETE),
-    addToOrgByName: forwardWithUserByName,
-    removeFromOrgByName: forwardWithUserByName
+    addToOrgByName: _.partial(forwardWithUserByName, types.ADD),
+    removeFromOrgByName: _.partial(forwardWithUserByName, types.DELETE)
 };

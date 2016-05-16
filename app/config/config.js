@@ -46,6 +46,10 @@ function getTokenKeyUrl() {
     return getProperty("token_key_url") || util.format("https://uaa.%s/token_key", getDomain());
 }
 
+function getUaaHost() {
+    return getProperty("uaa_host") || util.format("uaa.%s", getDomain());
+}
+
 function getProperty(name) {
     if (!_.isString(name)) {
         return null;
@@ -57,5 +61,6 @@ module.exports = {
     get: getProperty,
     getAuthGatewayHost: getAuthGatewayHost,
     getCfApiHost: getCfApiHost,
-    getTokenKeyUrl: getTokenKeyUrl
+    getTokenKeyUrl: getTokenKeyUrl,
+    getUaaHost: getUaaHost
 };

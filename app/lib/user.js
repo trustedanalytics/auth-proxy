@@ -62,6 +62,7 @@ function forwardWithUserByName(type, req, res) {
     var ccResponse = null,
         userGuid = req.params.org_guid,
         handlers = errorHandlers.get(res, 'add/remove user by name', userGuid);
+    req.headers['content-length'] = JSON.stringify(req.body).length;
     return forwarding.ccForward(req)
         .catch(handlers.cleanErrorHandler)
         .then(function (_ccResponse) {
